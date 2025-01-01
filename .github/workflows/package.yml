@@ -1,12 +1,14 @@
-name: Package Python to EXE
+name: Package Python to EXE and Release
 
 on:
   push:
     branches:
-      - main # 触发工作流的分支，可以根据需要修改
+      - main # 触发构建工作流的分支
+
 
 jobs:
   build:
+    if: github.ref_name != github.event.push.tags
     runs-on: windows-latest
 
     steps:
@@ -16,14 +18,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x' # 或者指定具体的版本，例如 '3.9'
+          python-version: '3.x'
 
       - name: Install dependencies (if any)
-        shell: pwsh
         run: |
-          if (Test-Path requirements.txt) {
+          if exist requirements.txt (
             pip install -r requirements.txt
-          }
+          )
 
       - name: Install PyInstaller
         run: pip install pyinstaller
@@ -32,11 +33,51 @@ jobs:
         run: |
           pyinstaller --onefile --windowed --name your_program your_script.py
         env:
-          YOUR_MAIN_SCRIPT: your_script.py # 替换为你的主 Python 脚本文件名
-          YOUR_PROGRAM_NAME: your_program  # 替换为你想要生成的 EXE 文件名
+          YOUR_MAIN_SCRIPT: your_script.py
+          YOUR_PROGRAM_NAME: your_program
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: executable
-          path: dist/your_program.exe # 上传生成的 EXE 文件
+          path: dist/your_program.exe
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: executable
+
+      - name: Get Tag Name
+        id: get_tag_name
+        run: echo "TAG_NAME=$(echo ${GITHUB_REF#refs/tags/})" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: |
+            This is the release for tag ${{ github.ref_name }}.
+            You can download the executable below.
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: executable/your_program.exe
+          asset_name: your_program.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
