@@ -19,10 +19,11 @@ jobs:
           python-version: '3.x' # 或者指定具体的版本，例如 '3.9'
 
       - name: Install dependencies (if any)
+        shell: pwsh
         run: |
-          if exist requirements.txt (
+          if (Test-Path requirements.txt) {
             pip install -r requirements.txt
-          )
+          }
 
       - name: Install PyInstaller
         run: pip install pyinstaller
