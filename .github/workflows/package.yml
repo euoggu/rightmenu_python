@@ -32,7 +32,7 @@ jobs:
 
       - name: Package with PyInstaller
         run: |
-          pyinstaller --onefile --windowed --name your_program your_script.py
+          pyinstaller --onefile --windowed --name your_program your_script.py # 确保这里是小写
         env:
           YOUR_MAIN_SCRIPT: your_script.py
           YOUR_PROGRAM_NAME: your_program
@@ -41,14 +41,14 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: executable
-          path: dist/your_program.exe
+          path: dist/your_program.exe # 确保这里是小写
 
   release:
-    needs: build # 依赖 build 任务完成
-    runs-on: ubuntu-latest # Release 步骤可以在 Linux 上运行
-
+    needs: build
+    runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v3
@@ -76,6 +76,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: executable/your_program.exe
-          asset_name: your_program-${{ github.ref_name }}.exe
+          asset_path: executable/your_program.exe # 确保这里是小写
+          asset_name: your_program-${{ github.ref_name }}.exe # 确保这里是小写
           asset_content_type: application/vnd.microsoft.portable-executable
