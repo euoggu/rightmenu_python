@@ -1,0 +1,41 @@
+name: Package Python to EXE
+
+on:
+  push:
+    branches:
+      - main # 触发工作流的分支，可以根据需要修改
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x' # 或者指定具体的版本，例如 '3.9'
+
+      - name: Install dependencies (if any)
+        run: |
+          if exist requirements.txt (
+            pip install -r requirements.txt
+          )
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Package with PyInstaller
+        run: |
+          pyinstaller --onefile --windowed --name your_program your_script.py
+        env:
+          YOUR_MAIN_SCRIPT: your_script.py # 替换为你的主 Python 脚本文件名
+          YOUR_PROGRAM_NAME: your_program  # 替换为你想要生成的 EXE 文件名
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: executable
+          path: dist/your_program.exe # 上传生成的 EXE 文件
